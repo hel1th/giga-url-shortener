@@ -1,0 +1,10 @@
+.git
+.gitignore
+.env
+*.exe
+*.test
+*.out
+review.md
+PLAN.md
+info.md
+README.md

@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package analytics.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/hel1th/giga-url-shortener/proto/analytics/v1;analyticsv1";
+
+service AnalyticsService {
+  rpc GetLinkSummary(GetLinkSummaryRequest) returns (GetLinkSummaryResponse);
+}
+
+message GetLinkSummaryRequest {
+  string short_code = 1;
+  google.protobuf.Timestamp from = 2;
+  google.protobuf.Timestamp to = 3;
+}
+
+message GetLinkSummaryResponse {
+  string short_code = 1;
+  uint64 total_clicks = 2;
+  uint64 unique_clicks = 3;
+
+  map<string, uint64> browsers = 4;
+  map<string, uint64> os = 5;
+  map<string, uint64> devices = 6;
+}

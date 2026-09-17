@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package analytics.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/hel1th/giga-url-shortener/proto/analytics/v1;analyticsv1";
+
+message ClickMeta {
+  string ip = 1;
+  string user_agent = 2;
+  string referer = 3;
+  string device = 4;
+  string browser = 5;
+  string os = 6;
+}
+
+message LinkClicked {
+  string short_code = 1;
+  ClickMeta meta = 2;
+  google.protobuf.Timestamp occurred_at = 3;
+}

@@ -1,0 +1,227 @@
+openapi: 3.0.3
+info:
+  title: Giga URL Shortener API
+  description: High-performance URL shortening and real-time analytics service API.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+paths:
+  /api/v1/links:
+    post:
+      summary: Create a shortened link
+      description: Accepts a valid HTTP/HTTPS original URL and creates a unique base62 short slug.
+      operationId: createShortLink
+      tags:
+        - Links
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLinkRequest'
+      responses:
+        '201':
+          description: Link successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateLinkResponse'
+        '400':
+          description: Invalid URL format or malformed JSON body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Short code collision occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Service unavailable (e.g. retry limit exceeded)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /r/{short_code}:
+    get:
+      summary: Redirect to the original URL
+      description: Hot Path endpoint. Looks up the original URL (Redis cache first, Postgres fallback), asynchronously emits a click event to Kafka, and responds with a 302 Found redirect.
+      operationId: redirectLink
+      tags:
+        - Redirects
+      parameters:
+        - name: short_code
+          in: path
+          required: true
+          description: 7-character base62 slug
+          schema:
+            type: string
+            example: "x7K9a8B"
+      responses:
+        '302':
+          description: Temporary redirect to the destination original URL
+          headers:
+            Location:
+              description: Target redirect URL
+              schema:
+                type: string
+                format: uri
+                example: "https://example.com/target-page"
+        '404':
+          description: Short link not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /r/{short_code}/stats:
+    get:
+      summary: Get link analytics and statistics
+      description: Returns aggregated click metrics, unique visitors, and device/browser/OS distributions by querying the analytics service via gRPC.
+      operationId: getLinkStats
+      tags:
+        - Analytics
+      parameters:
+        - name: short_code
+          in: path
+          required: true
+          description: 7-character base62 slug
+          schema:
+            type: string
+            example: "x7K9a8B"
+      responses:
+        '200':
+          description: Link analytics summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LinkStatsResponse'
+        '404':
+          description: Link not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error (e.g. database or analytics service failure)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    CreateLinkRequest:
+      type: object
+      required:
+        - original_url
+      properties:
+        original_url:
+          type: string
+          format: uri
+          description: Full HTTP/HTTPS target destination URL
+          example: "https://github.com/hel1th/giga-url-shortener"
+
+    CreateLinkResponse:
+      type: object
+      required:
+        - short_code
+        - short_url
+        - original_url
+      properties:
+        short_code:
+          type: string
+          description: Generated unique 7-character identifier
+          example: "x7K9a8B"
+        short_url:
+          type: string
+          format: uri
+          description: Fully qualified short link URL
+          example: "http://localhost:8080/r/x7K9a8B"
+        original_url:
+          type: string
+          format: uri
+          description: Original target URL
+          example: "https://github.com/hel1th/giga-url-shortener"
+
+    LinkStatsResponse:
+      type: object
+      required:
+        - short_code
+        - total_clicks
+        - unique_clicks
+        - browsers
+        - os
+        - devices
+      properties:
+        short_code:
+          type: string
+          description: Short code identifier
+          example: "x7K9a8B"
+        total_clicks:
+          type: integer
+          format: int64
+          description: Total number of clicks recorded
+          example: 1250
+        unique_clicks:
+          type: integer
+          format: int64
+          description: Count of unique IP addresses
+          example: 890
+        browsers:
+          type: object
+          description: Breakdown of clicks by browser
+          additionalProperties:
+            type: integer
+            format: int64
+          example:
+            Chrome: 800
+            Firefox: 300
+            Safari: 150
+        os:
+          type: object
+          description: Breakdown of clicks by operating system
+          additionalProperties:
+            type: integer
+            format: int64
+          example:
+            Windows: 650
+            macOS: 400
+            Linux: 200
+        devices:
+          type: object
+          description: Breakdown of clicks by device category
+          additionalProperties:
+            type: integer
+            format: int64
+          example:
+            desktop: 900
+            mobile: 320
+            tablet: 30
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Human-readable error message
+          example: "link not found"

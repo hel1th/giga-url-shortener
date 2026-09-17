@@ -1,0 +1,15 @@
+with-expecter: true
+issue-845-fix: true
+
+packages:
+  github.com/hel1th/giga-url-shortener/internal/link/usecase:
+    config:
+      dir: "{{.InterfaceDir}}/mocks"
+      outpkg: "mocks"
+      filename: "{{.InterfaceName}}.go"
+      mockname: "{{.InterfaceName}}"
+    interfaces:
+      LinkRepository:
+      LinkCache:
+      EventProducer:
+      AnalyticsClient:
