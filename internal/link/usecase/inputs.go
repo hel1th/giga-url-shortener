@@ -1,3 +1,4 @@
+// Package usecase contains the core application use cases and business workflows.
 package usecase
 
 import (
@@ -15,6 +16,7 @@ type RedirectInput struct {
 	Meta      domain.ClickMeta
 }
 
+// StatsInput encapsulates data required to fetch statistics for a short link.
 type StatsInput struct {
 	ShortCode string
 }

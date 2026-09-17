@@ -1,3 +1,4 @@
+// Package analytics provides a gRPC client adapter to communicate with analytics-service.
 package analytics
 
 import (
@@ -14,16 +15,19 @@ import (
 
 var _ usecase.AnalyticsClient = (*Client)(nil)
 
+// Client implements usecase.AnalyticsClient via gRPC.
 type Client struct {
 	grpcClient analyticsv1.AnalyticsServiceClient
 }
 
+// NewClient creates a new analytics gRPC client adapter.
 func NewClient(cc grpc.ClientConnInterface) *Client {
 	return &Client{
 		grpcClient: analyticsv1.NewAnalyticsServiceClient(cc),
 	}
 }
 
+// GetStats requests click statistics for a short link from the analytics service.
 func (c *Client) GetStats(ctx context.Context, shortCode string) (*domain.LinkStats, error) {
 	resp, err := c.grpcClient.GetLinkSummary(ctx, &analyticsv1.GetLinkSummaryRequest{ShortCode: shortCode})
 	if err == nil {

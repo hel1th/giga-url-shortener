@@ -1,3 +1,4 @@
+// Package kafka provides a Kafka-backed message producer.
 package kafka
 
 import (
@@ -7,11 +8,13 @@ import (
 	"github.com/twmb/franz-go/pkg/kgo"
 )
 
+// Producer publishes broker envelopes to a designated Kafka topic.
 type Producer struct {
 	client *kgo.Client
 	topic  string
 }
 
+// NewProducer creates a new Kafka producer instance for a given topic.
 func NewProducer(client *kgo.Client, topic string) *Producer {
 	return &Producer{
 		client: client,
@@ -19,6 +22,7 @@ func NewProducer(client *kgo.Client, topic string) *Producer {
 	}
 }
 
+// Publish publishes an envelope to Kafka.
 func (p *Producer) Publish(ctx context.Context, event broker.Envelope) error {
 	headers := make([]kgo.RecordHeader, 0, 3)
 	headers = append(headers,

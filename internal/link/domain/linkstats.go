@@ -1,6 +1,6 @@
 package domain
 
-// LinkStats представляет собой доменную модель агрегированной статистики по ссылке.
+// LinkStats represents aggregated analytics metrics for a shortened link.
 type LinkStats struct {
 	ShortCode    string
 	TotalClicks  uint64

@@ -9,6 +9,7 @@ import (
 
 const shortCodeParam = "short_code"
 
+// NewRouter constructs and configures the HTTP router with routes and middlewares.
 func NewRouter(h *LinkHandler) http.Handler {
 	r := chi.NewRouter()
 

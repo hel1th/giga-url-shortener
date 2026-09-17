@@ -1,3 +1,4 @@
+// Package app initializes dependencies and orchestrates the link service lifecycle.
 package app
 
 import (
@@ -28,6 +29,7 @@ import (
 	"github.com/hel1th/giga-url-shortener/internal/link/usecase"
 )
 
+// Run initializes infrastructure dependencies, binds routes, and serves HTTP requests until shutdown.
 func Run(ctx context.Context, cfg *config.Config, logger *slog.Logger) error {
 	pgPool, err := initPostgres(ctx, cfg.Postgres)
 	if err != nil {
@@ -39,7 +41,7 @@ func Run(ctx context.Context, cfg *config.Config, logger *slog.Logger) error {
 	if err != nil {
 		return fmt.Errorf("init redis: %w", err)
 	}
-	defer rdb.Close()
+	defer func() { _ = rdb.Close() }()
 
 	kafkaClient, err := initKafka(cfg.Kafka)
 	if err != nil {
@@ -59,7 +61,7 @@ func Run(ctx context.Context, cfg *config.Config, logger *slog.Logger) error {
 	if err != nil {
 		return fmt.Errorf("connect to analytics grpc: %w", err)
 	}
-	defer analyticsConn.Close()
+	defer func() { _ = analyticsConn.Close() }()
 
 	analyticsClient := analytics.NewClient(analyticsConn)
 

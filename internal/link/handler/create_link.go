@@ -9,6 +9,7 @@ import (
 	"github.com/hel1th/giga-url-shortener/internal/link/usecase"
 )
 
+// CreateLink handles POST requests to shorten a target URL.
 func (h *LinkHandler) CreateLink(w http.ResponseWriter, r *http.Request) {
 	var req dto.CreateLinkRequest
 	r.Body = http.MaxBytesReader(w, r.Body, 10<<10)

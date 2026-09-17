@@ -1,3 +1,4 @@
+// Package redis provides Redis caching for resolved link URLs.
 package redis
 
 import (
@@ -10,6 +11,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+// LinkCache implements usecase.LinkCache backed by Redis.
 type LinkCache struct {
 	rdb     *redis.Client
 	linkTTL time.Duration
@@ -17,10 +19,12 @@ type LinkCache struct {
 
 const linkKeyPrefix = "link:"
 
+// NewRedisRepo creates a new LinkCache with the provided Redis client and TTL duration.
 func NewRedisRepo(rdb *redis.Client, ttl time.Duration) *LinkCache {
 	return &LinkCache{rdb: rdb, linkTTL: ttl}
 }
 
+// Get retrieves the original URL for a short code from Redis cache.
 func (c *LinkCache) Get(ctx context.Context, shortCode string) (string, error) {
 	key := getLinkKey(shortCode)
 
@@ -34,6 +38,7 @@ func (c *LinkCache) Get(ctx context.Context, shortCode string) (string, error) {
 	return val, nil
 }
 
+// Set saves a shortCode-to-originalURL mapping into Redis cache with configured TTL.
 func (c *LinkCache) Set(ctx context.Context, shortCode, originalURL string) error {
 	key := getLinkKey(shortCode)
 

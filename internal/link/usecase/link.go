@@ -10,13 +10,14 @@ import (
 	"github.com/hel1th/giga-url-shortener/pkg/base62"
 )
 
-// ShortCodeLen is length of short code in link
+// ShortCodeLen is the length of short codes generated for links.
 const ShortCodeLen = 7
 
-// MaxRetries is a maximum amount of retries to generate short code that not colide with others
+// MaxRetries is the maximum number of attempts to generate a non-colliding short code.
 const MaxRetries = 5
 
-type linkUseCase struct {
+// LinkUseCase coordinates the business logic for creating, resolving, and querying links.
+type LinkUseCase struct {
 	repo          LinkRepository
 	cache         LinkCache
 	eventProducer EventProducer
@@ -24,14 +25,15 @@ type linkUseCase struct {
 	logger        *slog.Logger
 }
 
+// NewLinkUseCase creates a new LinkUseCase instance with dependencies.
 func NewLinkUseCase(
 	repo LinkRepository,
 	cache LinkCache,
 	eventProducer EventProducer,
 	analytics AnalyticsClient,
 	logger *slog.Logger,
-) *linkUseCase {
-	return &linkUseCase{
+) *LinkUseCase {
+	return &LinkUseCase{
 		repo:          repo,
 		cache:         cache,
 		eventProducer: eventProducer,
@@ -40,7 +42,8 @@ func NewLinkUseCase(
 	}
 }
 
-func (uc *linkUseCase) CreateShortLink(ctx context.Context, in CreateLinkInput) (*domain.Link, error) {
+// CreateShortLink generates a new unique short link and persists it.
+func (uc *LinkUseCase) CreateShortLink(ctx context.Context, in CreateLinkInput) (*domain.Link, error) {
 	link, err := domain.NewLink(in.OriginalURL)
 	if err != nil {
 		return nil, err
@@ -59,7 +62,8 @@ func (uc *linkUseCase) CreateShortLink(ctx context.Context, in CreateLinkInput) 
 	return link, nil
 }
 
-func (uc *linkUseCase) GetOriginalURL(ctx context.Context, in RedirectInput) (string, error) {
+// GetOriginalURL resolves a short code to its destination URL and emits a click event.
+func (uc *LinkUseCase) GetOriginalURL(ctx context.Context, in RedirectInput) (string, error) {
 	originalURL, err := uc.resolveURL(ctx, in.ShortCode)
 	if err != nil {
 		return "", err
@@ -70,7 +74,8 @@ func (uc *linkUseCase) GetOriginalURL(ctx context.Context, in RedirectInput) (st
 	return originalURL, nil
 }
 
-func (uc *linkUseCase) Stats(ctx context.Context, in StatsInput) (*domain.LinkStats, error) {
+// Stats queries aggregate click statistics for a short link.
+func (uc *LinkUseCase) Stats(ctx context.Context, in StatsInput) (*domain.LinkStats, error) {
 	if _, err := uc.resolveURL(ctx, in.ShortCode); err != nil {
 		return nil, err
 	}
@@ -84,7 +89,7 @@ func (uc *linkUseCase) Stats(ctx context.Context, in StatsInput) (*domain.LinkSt
 	return stats, nil
 }
 
-func (uc *linkUseCase) generateAndSaveLink(ctx context.Context, link *domain.Link) error {
+func (uc *LinkUseCase) generateAndSaveLink(ctx context.Context, link *domain.Link) error {
 	for retryCnt := range MaxRetries {
 		link.ShortCode = base62.MustGenerate(ShortCodeLen)
 
@@ -108,8 +113,7 @@ func (uc *linkUseCase) generateAndSaveLink(ctx context.Context, link *domain.Lin
 	return domain.ErrRetryLimitExceeded
 }
 
-func (uc *linkUseCase) resolveURL(ctx context.Context, shortCode string) (string, error) {
-
+func (uc *LinkUseCase) resolveURL(ctx context.Context, shortCode string) (string, error) {
 	url, err := uc.cache.Get(ctx, shortCode)
 	if err == nil {
 		return url, nil
@@ -134,7 +138,7 @@ func (uc *linkUseCase) resolveURL(ctx context.Context, shortCode string) (string
 	return link.OriginalURL, nil
 }
 
-func (uc *linkUseCase) publishClickEvent(ctx context.Context, shortCode string, meta domain.ClickMeta) {
+func (uc *LinkUseCase) publishClickEvent(ctx context.Context, shortCode string, meta domain.ClickMeta) {
 	clickEvent := domain.LinkClicked{
 		ShortCode:  shortCode,
 		Meta:       meta,

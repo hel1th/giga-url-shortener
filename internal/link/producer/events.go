@@ -1,3 +1,4 @@
+// Package producer provides event publishing adapters for the link service.
 package producer
 
 import (
@@ -15,16 +16,19 @@ import (
 
 var _ usecase.EventProducer = (*LinkEventProducer)(nil)
 
+// LinkEventProducer adapts domain event publishing to the message broker.
 type LinkEventProducer struct {
 	baseProducer broker.Producer
 }
 
+// NewLinkEventProducer creates a new LinkEventProducer instance.
 func NewLinkEventProducer(baseProducer broker.Producer) *LinkEventProducer {
 	return &LinkEventProducer{
 		baseProducer: baseProducer,
 	}
 }
 
+// PublishLinkClicked serializes and publishes a link clicked domain event to the broker.
 func (p *LinkEventProducer) PublishLinkClicked(ctx context.Context, event domain.LinkClicked) error {
 	payload, err := proto.Marshal(toProtoLinkClicked(event))
 	if err != nil {
@@ -47,7 +51,7 @@ func (p *LinkEventProducer) PublishLinkClicked(ctx context.Context, event domain
 	return nil
 }
 
-// toProtoLinkClicked транслирует чистые доменные типы в сгенерированные Protobuf-структуры
+// toProtoLinkClicked converts a domain LinkClicked event into a Protobuf message.
 func toProtoLinkClicked(event domain.LinkClicked) *analyticsv1.LinkClicked {
 	return &analyticsv1.LinkClicked{
 		ShortCode:  event.ShortCode,
@@ -56,9 +60,6 @@ func toProtoLinkClicked(event domain.LinkClicked) *analyticsv1.LinkClicked {
 			Ip:        event.Meta.IP,
 			UserAgent: event.Meta.UserAgent,
 			Referer:   event.Meta.Referer,
-			Device:    event.Meta.Device,
-			Browser:   event.Meta.Browser,
-			Os:        event.Meta.OS,
 		},
 	}
 }

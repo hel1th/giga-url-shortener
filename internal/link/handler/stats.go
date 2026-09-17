@@ -10,6 +10,7 @@ import (
 	"github.com/hel1th/giga-url-shortener/internal/link/usecase"
 )
 
+// Stats handles GET requests to retrieve aggregated click statistics for a short link.
 func (h *LinkHandler) Stats(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

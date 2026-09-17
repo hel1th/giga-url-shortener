@@ -5,10 +5,15 @@ import (
 )
 
 var (
-	ErrNotFound      = errors.New("link not found")
+	// ErrNotFound is returned when a requested link does not exist.
+	ErrNotFound = errors.New("link not found")
+	// ErrAlreadyExists is returned when attempting to create a link that collides with an existing one.
 	ErrAlreadyExists = errors.New("link already exists")
-	ErrInvalidURL    = errors.New("invalid url format")
+	// ErrInvalidURL is returned when an invalid URL format or scheme is provided.
+	ErrInvalidURL = errors.New("invalid url format")
 
-	ErrCacheMiss          = errors.New("not found in cache")
+	// ErrCacheMiss is returned when an item is not found in cache.
+	ErrCacheMiss = errors.New("not found in cache")
+	// ErrRetryLimitExceeded is returned when short code collision retry limit is exceeded.
 	ErrRetryLimitExceeded = errors.New("failed to generate unique short code after max retries")
 )

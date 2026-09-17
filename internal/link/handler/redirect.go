@@ -11,6 +11,7 @@ import (
 	"github.com/hel1th/giga-url-shortener/internal/link/usecase"
 )
 
+// Redirect handles GET requests to redirect short codes to their destination URLs.
 func (h *LinkHandler) Redirect(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	shortCode := chi.URLParam(r, shortCodeParam)

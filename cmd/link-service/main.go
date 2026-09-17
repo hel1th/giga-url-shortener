@@ -1,3 +1,4 @@
+// Package main is the entry point for the link service.
 package main
 
 import (
