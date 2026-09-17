@@ -27,9 +27,6 @@ type ClickMeta struct {
 	Ip            string                 `protobuf:"bytes,1,opt,name=ip,proto3" json:"ip,omitempty"`
 	UserAgent     string                 `protobuf:"bytes,2,opt,name=user_agent,json=userAgent,proto3" json:"user_agent,omitempty"`
 	Referer       string                 `protobuf:"bytes,3,opt,name=referer,proto3" json:"referer,omitempty"`
-	Device        string                 `protobuf:"bytes,4,opt,name=device,proto3" json:"device,omitempty"`
-	Browser       string                 `protobuf:"bytes,5,opt,name=browser,proto3" json:"browser,omitempty"`
-	Os            string                 `protobuf:"bytes,6,opt,name=os,proto3" json:"os,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -81,27 +78,6 @@ func (x *ClickMeta) GetUserAgent() string {
 func (x *ClickMeta) GetReferer() string {
 	if x != nil {
 		return x.Referer
-	}
-	return ""
-}
-
-func (x *ClickMeta) GetDevice() string {
-	if x != nil {
-		return x.Device
-	}
-	return ""
-}
-
-func (x *ClickMeta) GetBrowser() string {
-	if x != nil {
-		return x.Browser
-	}
-	return ""
-}
-
-func (x *ClickMeta) GetOs() string {
-	if x != nil {
-		return x.Os
 	}
 	return ""
 }
@@ -170,15 +146,12 @@ var File_proto_analytics_v1_link_event_proto protoreflect.FileDescriptor
 
 const file_proto_analytics_v1_link_event_proto_rawDesc = "" +
 	"\n" +
-	"#proto/analytics/v1/link_event.proto\x12\fanalytics.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x96\x01\n" +
+	"#proto/analytics/v1/link_event.proto\x12\fanalytics.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"T\n" +
 	"\tClickMeta\x12\x0e\n" +
 	"\x02ip\x18\x01 \x01(\tR\x02ip\x12\x1d\n" +
 	"\n" +
 	"user_agent\x18\x02 \x01(\tR\tuserAgent\x12\x18\n" +
-	"\areferer\x18\x03 \x01(\tR\areferer\x12\x16\n" +
-	"\x06device\x18\x04 \x01(\tR\x06device\x12\x18\n" +
-	"\abrowser\x18\x05 \x01(\tR\abrowser\x12\x0e\n" +
-	"\x02os\x18\x06 \x01(\tR\x02os\"\x96\x01\n" +
+	"\areferer\x18\x03 \x01(\tR\areferer\"\x96\x01\n" +
 	"\vLinkClicked\x12\x1d\n" +
 	"\n" +
 	"short_code\x18\x01 \x01(\tR\tshortCode\x12+\n" +
