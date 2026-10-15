@@ -1,5 +1,6 @@
 package domain
 
+// LinkSummary struct contains stats about concrete link 
 type LinkSummary struct {
 	TotalClicks  uint64
 	UniqueClicks uint64

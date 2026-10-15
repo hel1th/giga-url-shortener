@@ -7,6 +7,7 @@ import (
 	"github.com/mileusna/useragent"
 )
 
+// Click struct for keeping analytics data.
 type Click struct {
 	ShortCode string
 	ClickedAt time.Time
@@ -18,6 +19,7 @@ type Click struct {
 	Referer   string
 }
 
+// NewClickFromEvent creates a new Click from an analyticsv1.LinkClicked event.
 func NewClickFromEvent(event *analyticsv1.LinkClicked) Click {
 	click := Click{
 		ShortCode: event.ShortCode,

@@ -18,7 +18,7 @@ func NewClicksRepository(client clickhouse.Conn) *ClicksRepository {
 
 type Repository interface {
 	GetStats(ctx context.Context, shortCode string) (*domain.LinkSummary, error)
-	InsertBatch(ctx context.Context, clicks []*domain.Click) error
+	InsertBatch(ctx context.Context, clicks []domain.Click) error
 }
 
 func (r *ClicksRepository) InsertBatch(ctx context.Context, clicks []domain.Click) error {

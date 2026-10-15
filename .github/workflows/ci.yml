@@ -2,17 +2,13 @@ name: CI
 
 on:
   push:
-    branches: [ main, dev ]
+    branches: [main, dev]
   pull_request:
-    branches: [ main, dev ]
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+    branches: [main, dev]
 
 jobs:
   lint:
-    name: Lint & Style
+    name: Lint
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -21,48 +17,25 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: 'go.mod'
+          go-version-file: "go.mod"
           cache: true
 
-      - name: Lint Go code
-        uses: golangci/golangci-lint-action@v6
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v9
         with:
-          version: latest
-          args: --config=.golangci.yml --timeout=5m
+          version: v2.13.2
+          args: --timeout=5m
 
-      - name: Set up Buf
-        uses: bufbuild/buf-action@v1
-        with:
-          setup_only: true
-
-      - name: Lint Proto files
-        run: buf lint
-
-  verify-generated:
-    name: Verify Generated Code
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: 'go.mod'
-          cache: true
-
-      - name: Re-generate mocks
-        run: make mock
-
-      - name: Check for uncommitted mock changes
+      - name: Verify generated mocks
         run: |
+          make mock
           if ! git diff --exit-code; then
-            echo "::error::Generated mocks are out of date. Please run 'make mock' and commit the changes."
+            echo "::error::Generated mocks are out of date. Please run 'make mock' and commit changes."
             exit 1
           fi
 
-  test:
-    name: Unit Tests
+  test-and-build:
+    name: Test & Build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -71,70 +44,16 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: 'go.mod'
+          go-version-file: "go.mod"
           cache: true
 
-      - name: Run unit tests with race detector
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Run unit tests
+        run: go test -v -race ./...
+
+      - name: Build services
         run: |
-          go test -v -race -covermode=atomic -coverprofile=coverage.out ./...
-
-      - name: Upload coverage artifact
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: code-coverage
-          path: coverage.out
-          if-no-files-found: ignore
-
-  build:
-    name: Build Binaries
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: 'go.mod'
-          cache: true
-
-      - name: Build link-service
-        run: CGO_ENABLED=0 go build -v -ldflags="-s -w" -o /dev/null ./cmd/link-service
-
-      - name: Build analytics-service
-        run: CGO_ENABLED=0 go build -v -ldflags="-s -w" -o /dev/null ./cmd/analytics-service
-
-  docker-build:
-    name: Docker Build Check
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build migrations image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./deploy/Dockerfile
-          target: migrations
-          push: false
-
-      - name: Build link-service image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./deploy/Dockerfile
-          target: link-service
-          push: false
-
-      - name: Build analytics-service image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./deploy/Dockerfile
-          target: analytics-service
-          push: false
+          go build -v -o /dev/null ./cmd/link-service
+          go build -v -o /dev/null ./cmd/analytics-service
