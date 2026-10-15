@@ -2,47 +2,41 @@ version: "2"
 
 run:
   go: "1.27"
-  timeout: 5m
   tests: true
   allow-parallel-runners: true
 
-linters-settings:
-  govet:
-    enable-all: true
-    disable:
-      - shadow
-  errcheck:
-    check-type-assertions: false
-    check-blank: false
-
 linters:
-  disable-all: true
+  default: none
   enable:
     - errcheck
+    - gocyclo
+    - gosec
     - govet
     - ineffassign
+    - revive
     - staticcheck
     - unused
-    - gosec
-    - revive
-    - gocyclo
-
-issues:
-  exclude-dirs:
-    - internal/link/usecase/mocks
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - gocyclo
-        - errcheck
-        - gosec
-
-    # Полностью скрываем раздражающие ворнинги про отсутствие комментариев (revive/exported)
-    - linters:
-        - revive
-      text: "exported:.*should have comment"
-
-    # Также скрываем предупреждения revive об именовании параметров "unused-parameter" (если переменная действительно не юзается, об этом и так скажет `unused` или `ineffassign`)
-    # - linters:
-    #    - revive
-    #  text: "unused-parameter:"
+  settings:
+    errcheck:
+      check-type-assertions: false
+      check-blank: false
+    govet:
+      enable-all: true
+      disable:
+        - shadow
+        - fieldalignment
+  exclusions:
+    rules:
+      - linters:
+          - errcheck
+          - gocyclo
+          - gosec
+        path: _test\.go
+      - linters:
+          - revive
+        text: "exported:.*should have comment"
+      - linters:
+          - revive
+        text: "package-comments: should have a package comment"
+    paths:
+      - internal/link/usecase/mocks

@@ -1,3 +1,4 @@
+// Package grpc provides gRPC server implementation for analytics service.
 package grpc
 
 import (

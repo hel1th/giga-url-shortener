@@ -1,3 +1,4 @@
+// Package domain defines models and business entities for analytics service.
 package domain
 
 import (

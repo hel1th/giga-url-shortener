@@ -1,3 +1,4 @@
+// Package clickhouse provides ClickHouse repository implementation for analytics data.
 package clickhouse
 
 import (
@@ -38,7 +39,6 @@ func (r *ClicksRepository) InsertBatch(ctx context.Context, clicks []domain.Clic
 	if err != nil {
 		return err
 	}
-	defer batch.Send()
 
 	for _, click := range clicks {
 		err := batch.Append(
@@ -56,7 +56,7 @@ func (r *ClicksRepository) InsertBatch(ctx context.Context, clicks []domain.Clic
 		}
 	}
 
-	return nil
+	return batch.Send()
 }
 
 func (r *ClicksRepository) GetStats(ctx context.Context, shortCode string) (*domain.LinkSummary, error) {
@@ -120,7 +120,7 @@ func (r *ClicksRepository) fetchDistribution(
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	distr := make(map[string]uint64)
 
