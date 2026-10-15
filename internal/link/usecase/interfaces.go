@@ -16,6 +16,7 @@ type LinkRepository interface {
 type LinkCache interface {
 	Get(ctx context.Context, shortCode string) (string, error)
 	Set(ctx context.Context, shortCode, originalURL string) error
+	SetUnavailable(ctx context.Context, shortCode string) error
 }
 
 // EventProducer defines operations to emit domain events.

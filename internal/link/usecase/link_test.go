@@ -120,9 +120,10 @@ func TestStats_LinkNotFound(t *testing.T) {
 
 	shortCode := "notfound"
 
-	// В кэше нет, в репозитории тоже нет
-	cache.EXPECT().Get(ctx, shortCode).Return("", domain.ErrCacheMiss)
+	// В кэше нет, в репозитории тоже нет -> сохраняем в негативный кэш
+	cache.EXPECT().Get(ctx, shortCode).Return("", domain.ErrNotFound)
 	repo.EXPECT().Get(ctx, shortCode).Return(nil, domain.ErrNotFound)
+	cache.EXPECT().SetUnavailable(ctx, shortCode).Return(nil)
 
 	uc := usecase.NewLinkUseCase(repo, cache, producer, analytics, slog.Default())
 
@@ -132,3 +133,26 @@ func TestStats_LinkNotFound(t *testing.T) {
 	assert.ErrorIs(t, err, domain.ErrNotFound)
 	analytics.AssertNotCalled(t, "GetStats", mock.Anything, mock.Anything)
 }
+
+func TestStats_LinkNotFound_NegativeCacheHit(t *testing.T) {
+	ctx := context.Background()
+	repo := mocks.NewLinkRepository(t)
+	cache := mocks.NewLinkCache(t)
+	producer := mocks.NewEventProducer(t)
+	analytics := mocks.NewAnalyticsClient(t)
+
+	shortCode := "notfound"
+
+	// В кэше помечен как отсутствующий (negative cache hit) -> в репозиторий не идем
+	cache.EXPECT().Get(ctx, shortCode).Return("", domain.ErrNotFoundCached)
+
+	uc := usecase.NewLinkUseCase(repo, cache, producer, analytics, slog.Default())
+
+	stats, err := uc.Stats(ctx, usecase.StatsInput{ShortCode: shortCode})
+
+	assert.Nil(t, stats)
+	assert.ErrorIs(t, err, domain.ErrNotFound)
+	repo.AssertNotCalled(t, "Get", mock.Anything, mock.Anything)
+	analytics.AssertNotCalled(t, "GetStats", mock.Anything, mock.Anything)
+}
+

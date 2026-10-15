@@ -103,7 +103,8 @@ func (uc *LinkUseCase) generateAndSaveLink(ctx context.Context, link *domain.Lin
 			return dbErr
 		}
 
-		uc.logger.Warn("short code collision, retrying",
+		uc.logger.Warn(
+			"short code collision, retrying",
 			"attempt", retryCnt+1,
 			"short_code", link.ShortCode,
 			"error", dbErr,
@@ -118,13 +119,19 @@ func (uc *LinkUseCase) resolveURL(ctx context.Context, shortCode string) (string
 	if err == nil {
 		return url, nil
 	}
-	if !errors.Is(err, domain.ErrCacheMiss) {
+	if errors.Is(err, domain.ErrNotFoundCached) {
+		return "", domain.ErrNotFound
+	}
+	if !errors.Is(err, domain.ErrNotFound) {
 		uc.logger.Error("redis cache get error, falling back to db", "error", err, "short_code", shortCode)
 	}
 
 	link, dbErr := uc.repo.Get(ctx, shortCode)
 	if dbErr != nil {
 		if errors.Is(dbErr, domain.ErrNotFound) {
+			if cacheErr := uc.cache.SetUnavailable(ctx, shortCode); cacheErr != nil {
+				uc.logger.Error("redis cache set unavailable error", "error", cacheErr, "short_code", shortCode)
+			}
 			return "", domain.ErrNotFound
 		}
 		uc.logger.Error("failed to get link from repo", "error", dbErr, "short_code", shortCode)
