@@ -1,6 +1,7 @@
 .PHONY: start stop clean proto mock openapi lint
 
 COMPOSE_FILE = deploy/docker-compose.yaml
+MOCKERY_VERSION = v2.53.7
 
 start:
 	docker compose -f $(COMPOSE_FILE) up -d
@@ -17,7 +18,7 @@ proto:
 	       proto/analytics/v1/*.proto
 
 mock:
-	go run github.com/vektra/mockery/v2@latest
+	go run github.com/vektra/mockery/v2@$(MOCKERY_VERSION)
 
 lint:
 	golangci-lint run ./...

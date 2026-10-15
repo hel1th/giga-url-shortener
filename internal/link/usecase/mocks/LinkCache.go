@@ -78,9 +78,9 @@ func (_c *LinkCache_Get_Call) RunAndReturn(run func(context.Context, string) (st
 	return _c
 }
 
-// Set provides a mock function with given fields: ctx, shortCode, originalUrl
-func (_m *LinkCache) Set(ctx context.Context, shortCode string, originalUrl string) error {
-	ret := _m.Called(ctx, shortCode, originalUrl)
+// Set provides a mock function with given fields: ctx, shortCode, originalURL
+func (_m *LinkCache) Set(ctx context.Context, shortCode string, originalURL string) error {
+	ret := _m.Called(ctx, shortCode, originalURL)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Set")
@@ -88,7 +88,7 @@ func (_m *LinkCache) Set(ctx context.Context, shortCode string, originalUrl stri
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
-		r0 = rf(ctx, shortCode, originalUrl)
+		r0 = rf(ctx, shortCode, originalURL)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -104,12 +104,12 @@ type LinkCache_Set_Call struct {
 // Set is a helper method to define mock.On call
 //   - ctx context.Context
 //   - shortCode string
-//   - originalUrl string
-func (_e *LinkCache_Expecter) Set(ctx interface{}, shortCode interface{}, originalUrl interface{}) *LinkCache_Set_Call {
-	return &LinkCache_Set_Call{Call: _e.mock.On("Set", ctx, shortCode, originalUrl)}
+//   - originalURL string
+func (_e *LinkCache_Expecter) Set(ctx interface{}, shortCode interface{}, originalURL interface{}) *LinkCache_Set_Call {
+	return &LinkCache_Set_Call{Call: _e.mock.On("Set", ctx, shortCode, originalURL)}
 }
 
-func (_c *LinkCache_Set_Call) Run(run func(ctx context.Context, shortCode string, originalUrl string)) *LinkCache_Set_Call {
+func (_c *LinkCache_Set_Call) Run(run func(ctx context.Context, shortCode string, originalURL string)) *LinkCache_Set_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(string), args[2].(string))
 	})
@@ -122,6 +122,53 @@ func (_c *LinkCache_Set_Call) Return(_a0 error) *LinkCache_Set_Call {
 }
 
 func (_c *LinkCache_Set_Call) RunAndReturn(run func(context.Context, string, string) error) *LinkCache_Set_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SetUnavailable provides a mock function with given fields: ctx, shortCode
+func (_m *LinkCache) SetUnavailable(ctx context.Context, shortCode string) error {
+	ret := _m.Called(ctx, shortCode)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SetUnavailable")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(ctx, shortCode)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// LinkCache_SetUnavailable_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetUnavailable'
+type LinkCache_SetUnavailable_Call struct {
+	*mock.Call
+}
+
+// SetUnavailable is a helper method to define mock.On call
+//   - ctx context.Context
+//   - shortCode string
+func (_e *LinkCache_Expecter) SetUnavailable(ctx interface{}, shortCode interface{}) *LinkCache_SetUnavailable_Call {
+	return &LinkCache_SetUnavailable_Call{Call: _e.mock.On("SetUnavailable", ctx, shortCode)}
+}
+
+func (_c *LinkCache_SetUnavailable_Call) Run(run func(ctx context.Context, shortCode string)) *LinkCache_SetUnavailable_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *LinkCache_SetUnavailable_Call) Return(_a0 error) *LinkCache_SetUnavailable_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *LinkCache_SetUnavailable_Call) RunAndReturn(run func(context.Context, string) error) *LinkCache_SetUnavailable_Call {
 	_c.Call.Return(run)
 	return _c
 }

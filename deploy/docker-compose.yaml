@@ -64,6 +64,7 @@ services:
         soft: 262144
         hard: 262144
     volumes:
+      - ./clickhouse/init.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
       - clickhouse-data:/var/lib/clickhouse
 
   kafka:
