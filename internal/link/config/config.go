@@ -40,6 +40,7 @@ type RedisConfig struct {
 	Addr     string        `env:"REDIS_ADDR" env-default:"localhost:6379"`
 	Password string        `env:"REDIS_PASSWORD" env-default:""`
 	LinkTTL  time.Duration `env:"REDIS_LINK_TTL" env-default:"24h"`
+	NegativeCachingTTL  time.Duration `env:"REDIS_NEGATIVE_CACHE_TTL" env-default:"30s"`
 }
 
 // KafkaConfig holds Kafka producer settings for publishing events.

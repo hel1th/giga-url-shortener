@@ -7,7 +7,10 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-const shortCodeParam = "short_code"
+const (
+	shortCodeParam = "short_code"
+	apiVPrefix     = "/api/v1"
+)
 
 // NewRouter constructs and configures the HTTP router with routes and middlewares.
 func NewRouter(h *LinkHandler) http.Handler {
@@ -17,9 +20,10 @@ func NewRouter(h *LinkHandler) http.Handler {
 	r.Use(middleware.ClientIPFromXFF())
 	r.Use(middleware.Recoverer)
 
-	r.Post("/api/v1/links", h.CreateLink)
-	r.Get("/r/{"+shortCodeParam+"}", h.Redirect)
-	r.Get("/r/{"+shortCodeParam+"}/stats", h.Stats)
+	r.Get(apiVPrefix+"/r/{"+shortCodeParam+"}", h.Redirect)
+	r.Post(apiVPrefix+"/links", h.CreateLink)
+
+	r.Get(apiVPrefix+"/r/{"+shortCodeParam+"}/stats", h.Stats)
 
 	return r
 }

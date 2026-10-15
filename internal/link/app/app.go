@@ -50,7 +50,7 @@ func Run(ctx context.Context, cfg *config.Config, logger *slog.Logger) error {
 	defer kafkaClient.Close()
 
 	linkPgRepo := postgres.NewPostgresRepo(pgPool)
-	linkRedisRepo := redisrepo.NewRedisRepo(rdb, cfg.Redis.LinkTTL)
+	linkRedisRepo := redisrepo.NewRedisRepo(rdb, cfg.Redis.LinkTTL, cfg.Redis.NegativeCachingTTL)
 
 	baseKafkaProducer := kafka.NewProducer(kafkaClient, cfg.Kafka.Topic)
 	eventProducer := producer.NewLinkEventProducer(baseKafkaProducer)
