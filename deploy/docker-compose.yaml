@@ -66,6 +66,11 @@ services:
     volumes:
       - ./clickhouse/init.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
       - clickhouse-data:/var/lib/clickhouse
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8123/ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   kafka:
     image: apache/kafka:4.3.1
@@ -76,10 +81,10 @@ services:
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,INTERNAL://:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,INTERNAL://kafka:29092
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,INTERNAL:PLAINTEXT
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
@@ -98,9 +103,67 @@ services:
     environment:
       DYNAMIC_CONFIG_ENABLED: "true"
       KAFKA_CLUSTERS_0_NAME: local-shortener-cluster
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
     depends_on:
       - kafka
+
+  analytics-service:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+      target: analytics-service
+    container_name: shortener-analytics-service
+    restart: unless-stopped
+    ports:
+      - "8082:8082"
+      - "50051:50051"
+    environment:
+      ANALYTICS_GRPC_PORT: :50051
+      ANALYTICS_HTTP_PORT: :8082
+      CLICKHOUSE_ADDR: clickhouse:9000
+      CLICKHOUSE_DB: ${CLICKHOUSE_DB:-analytics}
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-default}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-default}
+      CLICKHOUSE_BATCH_SIZE: 500
+      CLICKHOUSE_FLUSH_INTERVAL: 2s
+      KAFKA_BROKERS: kafka:29092
+      KAFKA_TOPIC_CLICKS: link.clicks
+      KAFKA_CONSUMER_GROUP: analytics-group
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+
+  link-service:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+      target: link-service
+    container_name: shortener-link-service
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      BASE_URL: http://localhost:8080
+      LINK_HTTP_PORT: :8080
+      POSTGRES_DSN: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-shortener}?sslmode=disable
+      REDIS_ADDR: redis:6379
+      REDIS_LINK_TTL: 24h
+      KAFKA_BROKERS: kafka:29092
+      KAFKA_TOPIC_CLICKS: link.clicks
+      ANALYTICS_GRPC_ADDR: analytics-service:50051
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      analytics-service:
+        condition: service_started
+      migrations:
+        condition: service_completed_successfully
 
   jaeger:
     image: jaegertracing/all-in-one:1.76.0

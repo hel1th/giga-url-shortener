@@ -2,12 +2,11 @@
 package main
 
 import (
+	"context"
 	"log/slog"
-	"net/http"
 	"os"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	analyticsapp "github.com/hel1th/giga-url-shortener/internal/analytics/app"
 	"github.com/hel1th/giga-url-shortener/internal/analytics/config"
 )
 
@@ -21,25 +20,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	r := chi.NewRouter()
-
-	r.Use(middleware.Logger)
-	r.Get("/healthz", func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte("health"))
-	})
-
-	server := &http.Server{
-		Addr:         cfg.HTTP.Port,
-		Handler:      r,
-		ReadTimeout:  cfg.HTTP.ReadTimeout,
-		WriteTimeout: cfg.HTTP.WriteTimeout,
-		IdleTimeout:  cfg.HTTP.IdleTimeout,
-	}
-
-	logger.Info("starting analytics http server", "addr", server.Addr)
-	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		logger.Error("analytics http server failed", "error", err)
+	if err := analyticsapp.Run(context.Background(), cfg, logger); err != nil {
+		logger.Error("analytics service stopped with error", "error", err)
 		os.Exit(1)
 	}
 }
