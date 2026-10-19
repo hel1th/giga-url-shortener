@@ -9,7 +9,13 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/codes"
 )
+
+const tracerName = "repo.postgres"
+
+var tracer = otel.Tracer(tracerName)
 
 // LinkRepo implements usecase.LinkRepository backed by PostgreSQL.
 type LinkRepo struct {
@@ -26,6 +32,9 @@ const ErrUniqueViolationPg string = "23505"
 
 // Get retrieves a link entity by its unique short code.
 func (repo *LinkRepo) Get(ctx context.Context, shortCode string) (*domain.Link, error) {
+	ctx, span := tracer.Start(ctx, "Get")
+	defer span.End()
+
 	const q = `
 	SELECT id, short_code, original_url, created_at
 	FROM links
@@ -43,6 +52,8 @@ func (repo *LinkRepo) Get(ctx context.Context, shortCode string) (*domain.Link, 
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, domain.ErrNotFound
 		}
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 
@@ -51,6 +62,9 @@ func (repo *LinkRepo) Get(ctx context.Context, shortCode string) (*domain.Link, 
 
 // Create inserts a new link record into the links table.
 func (repo *LinkRepo) Create(ctx context.Context, link *domain.Link) error {
+	ctx, span := tracer.Start(ctx, "Create")
+	defer span.End()
+
 	const q = `
 	INSERT INTO links
 		(id, short_code, original_url, created_at)
@@ -62,6 +76,8 @@ func (repo *LinkRepo) Create(ctx context.Context, link *domain.Link) error {
 		if errors.As(err, &pgErr) && pgErr.Code == ErrUniqueViolationPg {
 			return domain.ErrAlreadyExists
 		}
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 	return nil
