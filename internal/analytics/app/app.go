@@ -127,6 +127,10 @@ func initClickHouse(ctx context.Context, cfg config.ClickHouseConfig) (clickhous
 			Username: cfg.User,
 			Password: cfg.Password,
 		},
+		DialTimeout:     cfg.DialTimeout,
+		MaxOpenConns:    cfg.MaxOpenConns,
+		MaxIdleConns:    cfg.MaxIdleConns,
+		ConnMaxLifetime: cfg.ConnMaxLifetime,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("open clickhouse: %w", err)
@@ -145,6 +149,7 @@ func initKafka(cfg config.KafkaConfig) (*kgo.Client, error) {
 		kgo.SeedBrokers(cfg.Brokers...),
 		kgo.ConsumerGroup(cfg.GroupID),
 		kgo.ConsumeTopics(cfg.Topic),
+		kgo.DisableAutoCommit(),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("create kafka consumer client: %w", err)

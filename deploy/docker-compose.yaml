@@ -129,7 +129,11 @@ services:
       KAFKA_BROKERS: kafka:29092
       KAFKA_TOPIC_CLICKS: link.clicks
       KAFKA_CONSUMER_GROUP: analytics-group
+      OTEL_EXPORTER_OTLP_ENDPOINT: jaeger:4317
+      OTEL_SERVICE_NAME_ANALYTICS: analytics-service
     depends_on:
+      jaeger:
+        condition: service_started
       clickhouse:
         condition: service_healthy
       kafka:
