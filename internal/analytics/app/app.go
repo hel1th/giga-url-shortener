@@ -22,6 +22,7 @@ import (
 	grpcserver "github.com/hel1th/giga-url-shortener/internal/analytics/server/grpc"
 	"github.com/hel1th/giga-url-shortener/internal/observability/tracing"
 	analyticsv1 "github.com/hel1th/giga-url-shortener/proto/analytics/v1"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/twmb/franz-go/pkg/kgo"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"golang.org/x/sync/errgroup"
@@ -81,6 +82,7 @@ func Run(ctx context.Context, cfg *config.Config, logger *slog.Logger) error {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("ok"))
 	})
+	httpRouter.Handle("/metrics", promhttp.Handler())
 
 	httpServer := &http.Server{
 		Addr:         cfg.HTTP.Port,

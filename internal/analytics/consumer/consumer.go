@@ -9,6 +9,7 @@ import (
 	"github.com/hel1th/giga-url-shortener/internal/analytics/domain"
 	"github.com/hel1th/giga-url-shortener/internal/analytics/repository/clickhouse"
 	"github.com/hel1th/giga-url-shortener/internal/broker"
+	"github.com/hel1th/giga-url-shortener/internal/observability/metrics"
 	analyticsv1 "github.com/hel1th/giga-url-shortener/proto/analytics/v1"
 	"github.com/twmb/franz-go/pkg/kgo"
 	"go.opentelemetry.io/otel"
@@ -58,10 +59,16 @@ func (c *Consumer) Run(ctx context.Context) error {
 		flushCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
+		flushStart := time.Now()
+		batchSize := len(clicks)
+		metrics.AnalyticsBatchSize.Observe(float64(batchSize))
+
 		if err := c.repo.InsertBatch(flushCtx, clicks); err != nil {
 			c.logger.Error("failed to insert batch into clickhouse", "error", err)
 			return
 		}
+
+		metrics.AnalyticsBatchFlushDuration.Observe(time.Since(flushStart).Seconds())
 
 		if err := c.client.CommitRecords(flushCtx, records...); err != nil {
 			c.logger.Error("failed to commit kafka offsets", "error", err)
@@ -102,6 +109,7 @@ func (c *Consumer) Run(ctx context.Context) error {
 
 			records = append(records, record)
 			clicks = append(clicks, domain.NewClickFromEvent(&event))
+			metrics.AnalyticsClicksIngestedTotal.Inc()
 
 			if len(clicks) >= c.batchSize {
 				flush()
