@@ -3,204 +3,437 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Giga URL Shortener</title>
+    <title>Giga Shortener</title>
     <style>
         :root {
-            --bg: #0f172a;
-            --surface: #1e293b;
-            --border: #334155;
-            --primary: #38bdf8;
-            --text: #f8fafc;
-            --text-muted: #94a3b8;
-            --success: #4ade80;
-            --error: #f87171;
+            --bg: #09090b;
+            --surface: #141416;
+            --surface-elevated: #1c1c1f;
+            --border: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(255, 255, 255, 0.16);
+            --text-main: #f4f4f5;
+            --text-muted: #71717a;
+            --text-dim: #a1a1aa;
+            --accent: #fafafa;
+            --accent-text: #09090b;
+            --badge-bg: #27272a;
+            --success: #22c55e;
+            --error: #ef4444;
         }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
-            font-family: system-ui, -apple-system, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
             background-color: var(--bg);
-            color: var(--text);
-            max-width: 680px;
-            margin: 40px auto;
-            padding: 0 20px;
+            color: var(--text-main);
+            max-width: 640px;
+            margin: 0 auto;
+            padding: 48px 20px;
             line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
         }
-        h1 {
-            font-size: 1.8rem;
-            margin-bottom: 8px;
-            color: var(--primary);
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 32px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
         }
-        .subtitle {
+
+        .brand {
+            font-size: 1.05rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        .brand span {
             color: var(--text-muted);
-            margin-bottom: 24px;
-            font-size: 0.95rem;
+            font-weight: 400;
         }
+
+
         .card {
-            background-color: var(--surface);
+            background: var(--surface);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: 10px;
             padding: 20px;
             margin-bottom: 20px;
+            transition: border-color 0.15s ease;
         }
-        .card h2 {
-            font-size: 1.15rem;
-            margin-top: 0;
-            margin-bottom: 12px;
+
+        .card:hover {
+            border-color: var(--border-hover);
         }
-        .form-group {
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+
+        .card-title {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .input-row {
             display: flex;
             gap: 8px;
         }
-        input[type="text"], input[type="url"] {
+
+        input {
             flex: 1;
-            padding: 10px 14px;
-            background-color: #0b1120;
+            background: var(--bg);
             border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 10px 14px;
             border-radius: 6px;
-            color: var(--text);
-            font-size: 0.95rem;
+            font-size: 0.9rem;
+            font-family: inherit;
             outline: none;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
         }
+
         input:focus {
-            border-color: var(--primary);
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3);
         }
+
+        input::placeholder {
+            color: var(--text-muted);
+        }
+
         button {
-            background-color: var(--primary);
-            color: #0b1120;
-            font-weight: 600;
+            background: var(--accent);
+            color: var(--accent-text);
             border: none;
             border-radius: 6px;
-            padding: 10px 18px;
+            padding: 10px 16px;
+            font-size: 0.88rem;
+            font-weight: 500;
+            font-family: inherit;
             cursor: pointer;
-            transition: opacity 0.2s;
+            transition: opacity 0.15s ease;
+            white-space: nowrap;
         }
+
         button:hover {
             opacity: 0.9;
         }
-        .result {
-            margin-top: 14px;
-            padding: 12px;
-            border-radius: 6px;
-            background: #0b1120;
+
+        button:active {
+            transform: scale(0.99);
+        }
+
+        button.secondary {
+            background: var(--surface-elevated);
+            color: var(--text-main);
             border: 1px solid var(--border);
+        }
+
+        button.secondary:hover {
+            border-color: var(--border-hover);
+        }
+
+        .result-box {
+            margin-top: 14px;
+            padding: 14px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.88rem;
             display: none;
+        }
+
+        .result-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
             word-break: break-all;
         }
-        .result a {
-            color: var(--success);
-            font-weight: 600;
+
+        .result-link {
+            color: var(--text-main);
             text-decoration: underline;
+            text-underline-offset: 3px;
+            font-family: ui-monospace, SFMono-Regular, monospace;
         }
-        pre {
-            background: #0b1120;
-            padding: 12px;
-            border-radius: 6px;
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .stat-item {
+            background: var(--bg);
             border: 1px solid var(--border);
-            overflow-x: auto;
-            font-size: 0.85rem;
-            color: #38bdf8;
+            border-radius: 6px;
+            padding: 12px;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-top: 4px;
+            font-family: ui-monospace, SFMono-Regular, monospace;
+        }
+
+        .breakdown-group {
             margin-top: 12px;
-            display: none;
         }
-        .links {
+
+        .breakdown-title {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 6px;
+        }
+
+        .tag-list {
             display: flex;
-            gap: 12px;
-            font-size: 0.85rem;
-            margin-top: 24px;
-            padding-top: 16px;
-            border-top: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 6px;
         }
-        .links a {
+
+        .tag {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.78rem;
+            font-family: ui-monospace, SFMono-Regular, monospace;
+            color: var(--text-dim);
+        }
+
+        .tag span {
+            color: var(--text-main);
+            font-weight: 600;
+            margin-left: 4px;
+        }
+
+        .footer {
+            margin-top: 40px;
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            font-size: 0.8rem;
+            border-top: 1px solid var(--border);
+            padding-top: 20px;
+        }
+
+        .footer a {
             color: var(--text-muted);
             text-decoration: none;
+            transition: color 0.15s ease;
         }
-        .links a:hover {
-            color: var(--primary);
+
+        .footer a:hover {
+            color: var(--text-main);
+        }
+
+        .raw-toggle {
+            margin-top: 12px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        pre {
+            margin-top: 8px;
+            padding: 10px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.78rem;
+            color: var(--text-dim);
+            overflow-x: auto;
+            display: none;
         }
     </style>
 </head>
 <body>
 
-    <h1>🚀 Giga URL Shortener</h1>
-    <div class="subtitle">Распределенный сокращатель ссылок с потоковой аналитикой в ClickHouse</div>
+    <header class="header">
+        <div class="brand">giga <span>/ shortener</span></div>
+    </header>
 
-    <!-- Блок 1: Сокращение ссылок -->
     <div class="card">
-        <h2>1. Сократить ссылку</h2>
-        <div class="form-group">
+        <div class="card-header">
+            <span class="card-title">Сократить ссылку</span>
+        </div>
+        <div class="input-row">
             <input type="url" id="originalUrl" placeholder="https://example.com/very/long/url" value="https://habr.com/ru/articles/700000/">
             <button onclick="shortenLink()">Сократить</button>
         </div>
-        <div id="shortenResult" class="result"></div>
+        <div id="shortenResult" class="result-box"></div>
     </div>
 
-    <!-- Блок 2: Получение статистики -->
     <div class="card">
-        <h2>2. Получить аналитику по ссылке (OLAP)</h2>
-        <div class="form-group">
-            <input type="text" id="statsCode" placeholder="Код ссылки (например: x7K9a8B)">
-            <button onclick="getStats()">Показать статистику</button>
+        <div class="card-header">
+            <span class="card-title">Аналитика переходов</span>
         </div>
-        <pre id="statsResult"></pre>
+        <div class="input-row">
+            <input type="text" id="statsCode" placeholder="Код ссылки">
+            <button class="secondary" onclick="getStats()">Запросить</button>
+        </div>
+        <div id="statsContainer" style="display: none;">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-label">Всего переходов</div>
+                    <div class="stat-value" id="statTotalClicks">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Уникальных IP</div>
+                    <div class="stat-value" id="statUniqueClicks">0</div>
+                </div>
+            </div>
+
+            <div class="breakdown-group">
+                <div class="breakdown-title">Браузеры</div>
+                <div class="tag-list" id="statBrowsers"></div>
+            </div>
+
+            <div class="breakdown-group">
+                <div class="breakdown-title">Операционные системы</div>
+                <div class="tag-list" id="statOS"></div>
+            </div>
+
+            <div class="breakdown-group">
+                <div class="breakdown-title">Устройства</div>
+                <div class="tag-list" id="statDevices"></div>
+            </div>
+
+            <div class="raw-toggle" onclick="toggleRaw()">Сырой ответ gRPC/ClickHouse</div>
+            <pre id="rawStats"></pre>
+        </div>
     </div>
 
-    <!-- Навигация по сервисам -->
-    <div class="links">
-        <a href="/metrics" target="_blank">📊 Prometheus Metrics (/metrics)</a>
-        <a href="/healthz" target="_blank">💚 Healthcheck (/healthz)</a>
-        <a href="http://localhost:16686" target="_blank">🔍 Jaeger UI</a>
-        <a href="http://localhost:9090" target="_blank">📈 Prometheus UI</a>
-    </div>
+    <footer class="footer">
+        <a href="/metrics" target="_blank">Metrics</a>
+        <a href="/healthz" target="_blank">Health</a>
+        <a href="http://localhost:16686" target="_blank">Jaeger Traces</a>
+        <a href="http://localhost:9090" target="_blank">Prometheus</a>
+        <a href="http://localhost:8085" target="_blank">Kafka UI</a>
+    </footer>
 
     <script>
         async function shortenLink() {
-            const urlInput = document.getElementById('originalUrl').value.trim();
-            const resDiv = document.getElementById('shortenResult');
-            if (!urlInput) return alert('Введите URL');
+            const input = document.getElementById('originalUrl');
+            const url = input.value.trim();
+            const out = document.getElementById('shortenResult');
+            if (!url) return;
 
-            resDiv.style.display = 'block';
-            resDiv.innerHTML = 'Создаем...';
+            out.style.display = 'block';
+            out.innerHTML = '<span style="color:var(--text-muted)">Создание...</span>';
 
             try {
                 const res = await fetch('/api/v1/links', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ original_url: urlInput })
+                    body: JSON.stringify({ original_url: url })
                 });
 
                 const data = await res.json();
                 if (!res.ok) {
-                    resDiv.style.color = 'var(--error)';
-                    resDiv.innerText = 'Ошибка: ' + (data.message || JSON.stringify(data));
+                    out.innerHTML = `<span style="color:var(--error)">${data.message || 'Ошибка запроса'}</span>`;
                     return;
                 }
 
-                resDiv.style.color = 'var(--text)';
-                resDiv.innerHTML = `Готово! Короткая ссылка (кликни для перехода):<br>` +
-                    `<a href="${data.short_url}" target="_blank">${data.short_url}</a> ` +
-                    `<span style="color:var(--text-muted); font-size:0.85rem"> (Код: <b>${data.short_code}</b>)</span>`;
+                out.innerHTML = `
+                    <div class="result-content">
+                        <div>
+                            <a href="${data.short_url}" target="_blank" class="result-link">${data.short_url}</a>
+                            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">код: ${data.short_code}</div>
+                        </div>
+                        <button class="secondary" style="padding:6px 10px; font-size:0.78rem;" onclick="copyLink('${data.short_url}', this)">Копировать</button>
+                    </div>
+                `;
 
                 document.getElementById('statsCode').value = data.short_code;
             } catch (err) {
-                resDiv.style.color = 'var(--error)';
-                resDiv.innerText = 'Сетевая ошибка: ' + err.message;
+                out.innerHTML = `<span style="color:var(--error)">Сетевая ошибка: ${err.message}</span>`;
             }
+        }
+
+        function copyLink(text, btn) {
+            navigator.clipboard.writeText(text);
+            const original = btn.innerText;
+            btn.innerText = 'Скопировано';
+            setTimeout(() => btn.innerText = original, 1500);
         }
 
         async function getStats() {
             const code = document.getElementById('statsCode').value.trim();
-            const pre = document.getElementById('statsResult');
-            if (!code) return alert('Введите короткий код');
+            const container = document.getElementById('statsContainer');
+            const raw = document.getElementById('rawStats');
+            if (!code) return;
 
-            pre.style.display = 'block';
-            pre.innerText = 'Запрашиваем ClickHouse через gRPC...';
+            container.style.display = 'block';
 
             try {
                 const res = await fetch(`/api/v1/links/${code}/stats`);
                 const data = await res.json();
-                pre.innerText = JSON.stringify(data, null, 2);
+
+                raw.innerText = JSON.stringify(data, null, 2);
+
+                document.getElementById('statTotalClicks').innerText = data.total_clicks || 0;
+                document.getElementById('statUniqueClicks').innerText = data.unique_clicks || 0;
+
+                renderTags('statBrowsers', data.browsers);
+                renderTags('statOS', data.os);
+                renderTags('statDevices', data.devices);
             } catch (err) {
-                pre.innerText = 'Ошибка: ' + err.message;
+                raw.style.display = 'block';
+                raw.innerText = 'Ошибка получения аналитики: ' + err.message;
             }
+        }
+
+        function renderTags(elementId, obj) {
+            const el = document.getElementById(elementId);
+            el.innerHTML = '';
+            if (!obj || Object.keys(obj).length === 0) {
+                el.innerHTML = '<span style="color:var(--text-muted); font-size:0.75rem;">нет данных</span>';
+                return;
+            }
+            for (const [key, val] of Object.entries(obj)) {
+                const tag = document.createElement('div');
+                tag.className = 'tag';
+                tag.innerHTML = `${escapeHtml(key)} <span>${val}</span>`;
+                el.appendChild(tag);
+            }
+        }
+
+        function toggleRaw() {
+            const raw = document.getElementById('rawStats');
+            raw.style.display = raw.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function escapeHtml(str) {
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
     </script>
 </body>
