@@ -47,9 +47,9 @@ func (p *Producer) Publish(ctx context.Context, event broker.Envelope) {
 		Headers:   headers,
 	}
 
-	p.client.Produce(ctx, record, func(r *kgo.Record, err error) {
+	p.client.Produce(context.WithoutCancel(ctx), record, func(r *kgo.Record, err error) {
 		if err != nil {
-			p.logger.Error("can't produce record", "record key", r.Key)
+			p.logger.Error("can't produce record", "record key", string(r.Key), "error", err)
 		}
 	})
 }
