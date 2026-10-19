@@ -21,7 +21,7 @@ type LinkCache interface {
 
 // EventProducer defines operations to emit domain events.
 type EventProducer interface {
-	PublishLinkClicked(ctx context.Context, event domain.LinkClicked) error
+	PublishLinkClicked(ctx context.Context, event domain.LinkClicked)
 }
 
 // AnalyticsClient defines the interface for communicating with the analytics service.

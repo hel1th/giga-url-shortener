@@ -23,21 +23,8 @@ func (_m *EventProducer) EXPECT() *EventProducer_Expecter {
 }
 
 // PublishLinkClicked provides a mock function with given fields: ctx, event
-func (_m *EventProducer) PublishLinkClicked(ctx context.Context, event domain.LinkClicked) error {
-	ret := _m.Called(ctx, event)
-
-	if len(ret) == 0 {
-		panic("no return value specified for PublishLinkClicked")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, domain.LinkClicked) error); ok {
-		r0 = rf(ctx, event)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
+func (_m *EventProducer) PublishLinkClicked(ctx context.Context, event domain.LinkClicked) {
+	_m.Called(ctx, event)
 }
 
 // EventProducer_PublishLinkClicked_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PublishLinkClicked'
@@ -59,13 +46,13 @@ func (_c *EventProducer_PublishLinkClicked_Call) Run(run func(ctx context.Contex
 	return _c
 }
 
-func (_c *EventProducer_PublishLinkClicked_Call) Return(_a0 error) *EventProducer_PublishLinkClicked_Call {
-	_c.Call.Return(_a0)
+func (_c *EventProducer_PublishLinkClicked_Call) Return() *EventProducer_PublishLinkClicked_Call {
+	_c.Call.Return()
 	return _c
 }
 
-func (_c *EventProducer_PublishLinkClicked_Call) RunAndReturn(run func(context.Context, domain.LinkClicked) error) *EventProducer_PublishLinkClicked_Call {
-	_c.Call.Return(run)
+func (_c *EventProducer_PublishLinkClicked_Call) RunAndReturn(run func(context.Context, domain.LinkClicked)) *EventProducer_PublishLinkClicked_Call {
+	_c.Run(run)
 	return _c
 }
 

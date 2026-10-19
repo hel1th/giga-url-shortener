@@ -18,5 +18,5 @@ type Envelope struct {
 
 // Producer defines an interface for publishing envelopes to a message broker.
 type Producer interface {
-	Publish(ctx context.Context, event Envelope) error
+	Publish(ctx context.Context, event Envelope)
 }

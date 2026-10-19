@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/hel1th/giga-url-shortener/internal/observability/tracing"
 )
 
 const (
@@ -19,6 +20,7 @@ func NewRouter(h *LinkHandler) http.Handler {
 	r.Use(middleware.RequestID)
 	r.Use(middleware.ClientIPFromXFF())
 	r.Use(middleware.Recoverer)
+	r.Use(tracing.RouteName)
 
 	r.Get(apiVPrefix+"/r/{"+shortCodeParam+"}", h.Redirect)
 	r.Post(apiVPrefix+"/links", h.CreateLink)

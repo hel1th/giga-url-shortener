@@ -153,7 +153,10 @@ services:
       KAFKA_BROKERS: kafka:29092
       KAFKA_TOPIC_CLICKS: link.clicks
       ANALYTICS_GRPC_ADDR: analytics-service:50051
+      OTEL_EXPORTER_OTLP_ENDPOINT: jaeger:4317  
     depends_on:
+      jaeger:
+        condition: service_started
       postgres:
         condition: service_healthy
       redis:

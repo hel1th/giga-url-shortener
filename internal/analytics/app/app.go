@@ -74,14 +74,14 @@ func Run(ctx context.Context, cfg *config.Config, logger *slog.Logger) error {
 	g, gCtx := errgroup.WithContext(sigCtx)
 
 	g.Go(func() error {
-		logger.Info("starting analytics kafka consumer",
+		logger.Info(
+			"starting analytics kafka consumer",
 			"batch_size", cfg.ClickHouse.BatchSize,
 			"flush_interval", cfg.ClickHouse.FlushInterval,
 		)
 		return c.Run(gCtx)
 	})
 
-	
 	g.Go(func() error {
 		logger.Info("starting analytics grpc server", "addr", cfg.GRPC.Port)
 		if err := grpcServer.Serve(grpcListener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
@@ -90,7 +90,6 @@ func Run(ctx context.Context, cfg *config.Config, logger *slog.Logger) error {
 		return nil
 	})
 
-	
 	g.Go(func() error {
 		logger.Info("starting analytics http server", "addr", cfg.HTTP.Port)
 		if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -99,7 +98,6 @@ func Run(ctx context.Context, cfg *config.Config, logger *slog.Logger) error {
 		return nil
 	})
 
-	
 	g.Go(func() error {
 		<-gCtx.Done()
 		logger.Info("shutdown signal received, stopping servers gracefully...")
