@@ -4,7 +4,8 @@ package analytics.v1;
 
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/hel1th/giga-url-shortener/proto/analytics/v1;analyticsv1";
+option go_package = "github.com/hel1th/giga-url-shortener/proto/analytics/v1;"
+    "analyticsv1";
 
 message ClickMeta {
   string ip = 1;

@@ -151,8 +151,5 @@ func (uc *LinkUseCase) publishClickEvent(ctx context.Context, shortCode string, 
 		Meta:       meta,
 		OccurredAt: time.Now(),
 	}
-
-	if err := uc.eventProducer.PublishLinkClicked(ctx, clickEvent); err != nil {
-		uc.logger.Error("failed to publish link clicked event to broker", "error", err, "short_code", shortCode)
-	}
+	uc.eventProducer.PublishLinkClicked(ctx, clickEvent)
 }

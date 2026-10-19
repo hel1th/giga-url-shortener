@@ -10,6 +10,8 @@ import (
 	"github.com/hel1th/giga-url-shortener/internal/link/domain"
 	"github.com/hel1th/giga-url-shortener/internal/link/usecase"
 	analyticsv1 "github.com/hel1th/giga-url-shortener/proto/analytics/v1"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -29,26 +31,29 @@ func NewLinkEventProducer(baseProducer broker.Producer) *LinkEventProducer {
 }
 
 // PublishLinkClicked serializes and publishes a link clicked domain event to the broker.
-func (p *LinkEventProducer) PublishLinkClicked(ctx context.Context, event domain.LinkClicked) error {
+func (p *LinkEventProducer) PublishLinkClicked(ctx context.Context, event domain.LinkClicked) {
 	payload, err := proto.Marshal(toProtoLinkClicked(event))
 	if err != nil {
-		return fmt.Errorf("marshal link clicked event: %w", err)
+		_ = fmt.Errorf("marshal link clicked event: %w", err)
 	}
 
 	envelope := broker.Envelope{
-		ID:         uuid.NewString(),
-		Type:       domain.EventTypeLinkClicked,
-		Key:        event.ShortCode,
-		OccurredAt: event.OccurredAt,
-		Payload:    payload,
-		// TraceParent: extractTraceParent(ctx),
+		ID:          uuid.NewString(),
+		Type:        domain.EventTypeLinkClicked,
+		Key:         event.ShortCode,
+		OccurredAt:  event.OccurredAt,
+		Payload:     payload,
+		TraceParent: extractTraceParent(ctx),
 	}
 
-	if err := p.baseProducer.Publish(ctx, envelope); err != nil {
-		return fmt.Errorf("publish link clicked envelope: %w", err)
-	}
+	p.baseProducer.Publish(ctx, envelope)
+}
 
-	return nil
+// extractTraceParent extracts the W3C traceparent header value from the current span context.
+func extractTraceParent(ctx context.Context) string {
+	carrier := propagation.MapCarrier{}
+	otel.GetTextMapPropagator().Inject(ctx, carrier)
+	return carrier.Get(broker.HeaderTraceParent)
 }
 
 // toProtoLinkClicked converts a domain LinkClicked event into a Protobuf message.

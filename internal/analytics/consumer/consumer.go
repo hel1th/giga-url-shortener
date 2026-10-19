@@ -2,15 +2,23 @@ package consumer
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"time"
 
 	"github.com/hel1th/giga-url-shortener/internal/analytics/domain"
 	"github.com/hel1th/giga-url-shortener/internal/analytics/repository/clickhouse"
+	"github.com/hel1th/giga-url-shortener/internal/broker"
+	"github.com/hel1th/giga-url-shortener/internal/observability/metrics"
 	analyticsv1 "github.com/hel1th/giga-url-shortener/proto/analytics/v1"
 	"github.com/twmb/franz-go/pkg/kgo"
+	"go.opentelemetry.io/otel"
 	"google.golang.org/protobuf/proto"
 )
+
+const tracerName = "analytics.consumer"
+
+var tracer = otel.Tracer(tracerName)
 
 type Consumer struct {
 	client        *kgo.Client
@@ -48,12 +56,21 @@ func (c *Consumer) Run(ctx context.Context) error {
 			return
 		}
 
-		if err := c.repo.InsertBatch(ctx, clicks); err != nil {
+		flushCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		flushStart := time.Now()
+		batchSize := len(clicks)
+		metrics.AnalyticsBatchSize.Observe(float64(batchSize))
+
+		if err := c.repo.InsertBatch(flushCtx, clicks); err != nil {
 			c.logger.Error("failed to insert batch into clickhouse", "error", err)
 			return
 		}
 
-		if err := c.client.CommitRecords(ctx, records...); err != nil {
+		metrics.AnalyticsBatchFlushDuration.Observe(time.Since(flushStart).Seconds())
+
+		if err := c.client.CommitRecords(flushCtx, records...); err != nil {
 			c.logger.Error("failed to commit kafka offsets", "error", err)
 		}
 
@@ -70,23 +87,29 @@ func (c *Consumer) Run(ctx context.Context) error {
 		case <-ticker.C:
 			flush()
 		case <-ctx.Done():
-			flush()
 			return nil
 		case record, ok := <-recordCh:
 			if !ok {
-				flush()
 				return nil
 			}
 
 			var event analyticsv1.LinkClicked
 
+			carrier := broker.NewCarrier(record.Headers)
+			recordCtx := otel.GetTextMapPropagator().Extract(context.Background(), carrier)
+			_, span := tracer.Start(recordCtx, "kafka.Consume")
+
 			if err := proto.Unmarshal(record.Value, &event); err != nil {
+				span.RecordError(err)
+				span.End()
 				c.logger.Error("failed to unmarshal kafka record", "error", err)
 				continue
 			}
+			span.End()
 
 			records = append(records, record)
 			clicks = append(clicks, domain.NewClickFromEvent(&event))
+			metrics.AnalyticsClicksIngestedTotal.Inc()
 
 			if len(clicks) >= c.batchSize {
 				flush()
@@ -110,13 +133,23 @@ func (c *Consumer) startReader(ctx context.Context) <-chan *kgo.Record {
 				return
 			}
 
-			fetches.EachRecord(func(record *kgo.Record) {
+			if errs := fetches.Errors(); len(errs) > 0 {
+				for _, err := range errs {
+					if !errors.Is(err.Err, context.Canceled) {
+						c.logger.Error("kafka poll error", "topic", err.Topic, "partition", err.Partition, "error", err.Err)
+					}
+				}
+			}
+
+			iter := fetches.RecordIter()
+			for !iter.Done() {
+				record := iter.Next()
 				select {
 				case recordCh <- record:
 				case <-ctx.Done():
 					return
 				}
-			})
+			}
 		}
 	}()
 

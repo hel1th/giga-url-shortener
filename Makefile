@@ -6,6 +6,9 @@ MOCKERY_VERSION = v2.53.7
 start:
 	docker compose -f $(COMPOSE_FILE) up -d
 
+build:
+	docker compose -f $(COMPOSE_FILE) up -d --build
+
 stop:
 	docker compose -f $(COMPOSE_FILE) stop
 

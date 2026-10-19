@@ -33,12 +33,16 @@ type HTTPConfig struct {
 
 // ClickHouseConfig holds connection and batching settings for ClickHouse.
 type ClickHouseConfig struct {
-	Addr          string        `env:"CLICKHOUSE_ADDR" env-default:"localhost:9000"`
-	DB            string        `env:"CLICKHOUSE_DB" env-default:"analytics"`
-	User          string        `env:"CLICKHOUSE_USER" env-default:"default"`
-	Password      string        `env:"CLICKHOUSE_PASSWORD" env-default:"default"`
-	BatchSize     int           `env:"CLICKHOUSE_BATCH_SIZE" env-default:"500"`
-	FlushInterval time.Duration `env:"CLICKHOUSE_FLUSH_INTERVAL" env-default:"2s"`
+	Addr            string        `env:"CLICKHOUSE_ADDR" env-default:"localhost:9000"`
+	DB              string        `env:"CLICKHOUSE_DB" env-default:"analytics"`
+	User            string        `env:"CLICKHOUSE_USER" env-default:"default"`
+	Password        string        `env:"CLICKHOUSE_PASSWORD" env-default:"default"`
+	BatchSize       int           `env:"CLICKHOUSE_BATCH_SIZE" env-default:"500"`
+	FlushInterval   time.Duration `env:"CLICKHOUSE_FLUSH_INTERVAL" env-default:"2s"`
+	DialTimeout     time.Duration `env:"CLICKHOUSE_DIAL_TIMEOUT" env-default:"5s"`
+	MaxOpenConns    int           `env:"CLICKHOUSE_MAX_OPEN_CONNS" env-default:"20"`
+	MaxIdleConns    int           `env:"CLICKHOUSE_MAX_IDLE_CONNS" env-default:"10"`
+	ConnMaxLifetime time.Duration `env:"CLICKHOUSE_CONN_MAX_LIFETIME" env-default:"10m"`
 }
 
 // KafkaConfig holds Kafka consumer connection settings.

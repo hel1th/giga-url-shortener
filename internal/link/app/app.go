@@ -17,9 +17,11 @@ import (
 	"github.com/hel1th/giga-url-shortener/internal/link/producer"
 	"github.com/hel1th/giga-url-shortener/internal/link/repository/postgres"
 	redisrepo "github.com/hel1th/giga-url-shortener/internal/link/repository/redis"
+	"github.com/hel1th/giga-url-shortener/internal/observability/tracing"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 	"github.com/twmb/franz-go/pkg/kgo"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -27,10 +29,24 @@ import (
 
 	"github.com/hel1th/giga-url-shortener/internal/link/handler"
 	"github.com/hel1th/giga-url-shortener/internal/link/usecase"
+
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 )
 
 // Run initializes infrastructure dependencies, binds routes, and serves HTTP requests until shutdown.
 func Run(ctx context.Context, cfg *config.Config, logger *slog.Logger) error {
+	tp, err := tracing.InitTracer(context.Background(), cfg.OTel.Endpoint, cfg.OTel.ServiceName)
+	if err != nil {
+		return fmt.Errorf("init tracer: %w", err)
+	}
+	defer func() {
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := tp.Shutdown(shutdownCtx); err != nil {
+			logger.Error("tracer shutdown failed", slog.String("error", err.Error()))
+		}
+	}()
+
 	pgPool, err := initPostgres(ctx, cfg.Postgres)
 	if err != nil {
 		return fmt.Errorf("init pg: %w", err)
@@ -52,11 +68,13 @@ func Run(ctx context.Context, cfg *config.Config, logger *slog.Logger) error {
 	linkPgRepo := postgres.NewPostgresRepo(pgPool)
 	linkRedisRepo := redisrepo.NewRedisRepo(rdb, cfg.Redis.LinkTTL, cfg.Redis.NegativeCachingTTL)
 
-	baseKafkaProducer := kafka.NewProducer(kafkaClient, cfg.Kafka.Topic)
+	baseKafkaProducer := kafka.NewProducer(kafkaClient, cfg.Kafka.Topic, logger)
 	eventProducer := producer.NewLinkEventProducer(baseKafkaProducer)
 
-	analyticsConn, err := grpc.NewClient(cfg.AnalyticsGRPC.Addr,
+	analyticsConn, err := grpc.NewClient(
+		cfg.AnalyticsGRPC.Addr,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 	)
 	if err != nil {
 		return fmt.Errorf("connect to analytics grpc: %w", err)
@@ -71,8 +89,13 @@ func Run(ctx context.Context, cfg *config.Config, logger *slog.Logger) error {
 	router := handler.NewRouter(linkHandler)
 
 	server := &http.Server{
-		Addr:         cfg.LinkHTTP.Port,
-		Handler:      router,
+		Addr: cfg.LinkHTTP.Port,
+		Handler: otelhttp.NewHandler(
+			router, "link-service",
+			otelhttp.WithSpanNameFormatter(func(_ string, r *http.Request) string {
+				return r.Method + " " + r.URL.Path
+			}),
+		),
 		ReadTimeout:  cfg.LinkHTTP.ReadTimeout,
 		WriteTimeout: cfg.LinkHTTP.WriteTimeout,
 		IdleTimeout:  cfg.LinkHTTP.IdleTimeout,
