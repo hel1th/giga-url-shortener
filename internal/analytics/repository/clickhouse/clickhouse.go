@@ -7,7 +7,13 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/hel1th/giga-url-shortener/internal/analytics/domain"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/codes"
 )
+
+const tracerName = "repo.clickhouse"
+
+var tracer = otel.Tracer(tracerName)
 
 type ClicksRepository struct {
 	client clickhouse.Conn
@@ -23,6 +29,9 @@ type Repository interface {
 }
 
 func (r *ClicksRepository) InsertBatch(ctx context.Context, clicks []domain.Click) error {
+	ctx, span := tracer.Start(ctx, "clickhouse.InsertBatch")
+	defer span.End()
+
 	const q = `
 	INSERT INTO analytics.link_clicks (
 		short_code,
@@ -37,6 +46,8 @@ func (r *ClicksRepository) InsertBatch(ctx context.Context, clicks []domain.Clic
 
 	batch, err := r.client.PrepareBatch(ctx, q)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 
@@ -52,14 +63,25 @@ func (r *ClicksRepository) InsertBatch(ctx context.Context, clicks []domain.Clic
 			click.Referer,
 		)
 		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
 			return err
 		}
 	}
 
-	return batch.Send()
+	if err := batch.Send(); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+
+	return nil
 }
 
 func (r *ClicksRepository) GetStats(ctx context.Context, shortCode string) (*domain.LinkSummary, error) {
+	ctx, span := tracer.Start(ctx, "clickhouse.GetStats")
+	defer span.End()
+
 	const qCount = `
 	SELECT count(*), uniqExact(ip)
 	FROM analytics.link_clicks
@@ -69,7 +91,8 @@ func (r *ClicksRepository) GetStats(ctx context.Context, shortCode string) (*dom
 
 	err := r.client.QueryRow(ctx, qCount, shortCode).Scan(&summary.TotalClicks, &summary.UniqueClicks)
 	if err != nil {
-		// log error
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 	if summary.TotalClicks == 0 {
@@ -78,16 +101,22 @@ func (r *ClicksRepository) GetStats(ctx context.Context, shortCode string) (*dom
 
 	summary.Browser, err = r.fetchDistribution(ctx, "browser", shortCode)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 
 	summary.OS, err = r.fetchDistribution(ctx, "os", shortCode)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 
 	summary.Device, err = r.fetchDistribution(ctx, "device", shortCode)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 

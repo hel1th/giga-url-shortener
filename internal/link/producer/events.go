@@ -34,7 +34,7 @@ func NewLinkEventProducer(baseProducer broker.Producer) *LinkEventProducer {
 func (p *LinkEventProducer) PublishLinkClicked(ctx context.Context, event domain.LinkClicked) {
 	payload, err := proto.Marshal(toProtoLinkClicked(event))
 	if err != nil {
-		fmt.Errorf("marshal link clicked event: %w", err)
+		_ = fmt.Errorf("marshal link clicked event: %w", err)
 	}
 
 	envelope := broker.Envelope{

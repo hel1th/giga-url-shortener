@@ -29,11 +29,13 @@ import (
 
 	"github.com/hel1th/giga-url-shortener/internal/link/handler"
 	"github.com/hel1th/giga-url-shortener/internal/link/usecase"
+
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 )
 
 // Run initializes infrastructure dependencies, binds routes, and serves HTTP requests until shutdown.
 func Run(ctx context.Context, cfg *config.Config, logger *slog.Logger) error {
-	tp, err := tracing.InitTracer(ctx, cfg.OTel.Endpoint, cfg.OTel.ServiceName)
+	tp, err := tracing.InitTracer(context.Background(), cfg.OTel.Endpoint, cfg.OTel.ServiceName)
 	if err != nil {
 		return fmt.Errorf("init tracer: %w", err)
 	}
@@ -72,6 +74,7 @@ func Run(ctx context.Context, cfg *config.Config, logger *slog.Logger) error {
 	analyticsConn, err := grpc.NewClient(
 		cfg.AnalyticsGRPC.Addr,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 	)
 	if err != nil {
 		return fmt.Errorf("connect to analytics grpc: %w", err)
@@ -85,7 +88,6 @@ func Run(ctx context.Context, cfg *config.Config, logger *slog.Logger) error {
 	linkHandler := handler.NewLinkHandler(linkUseCase, logger, cfg.LinkHTTP.BaseURL)
 	router := handler.NewRouter(linkHandler)
 
-	
 	server := &http.Server{
 		Addr: cfg.LinkHTTP.Port,
 		Handler: otelhttp.NewHandler(
