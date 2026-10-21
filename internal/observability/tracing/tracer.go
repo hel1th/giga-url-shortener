@@ -33,7 +33,7 @@ func InitTracer(ctx context.Context, endpoint, serviceName string) (*sdktrace.Tr
 	tp := sdktrace.NewTracerProvider(
 		sdktrace.WithBatcher(exporter),
 		sdktrace.WithResource(res),
-		sdktrace.WithSampler(sdktrace.AlwaysSample()),
+		sdktrace.WithSampler(sdktrace.TraceIDRatioBased(0.1)),
 	)
 
 	otel.SetTracerProvider(tp)

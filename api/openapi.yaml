@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Giga URL Shortener API
-  description: High-performance URL shortening and real-time analytics service API.
+  description: URL shortening service API with asynchronous click analytics.
   version: 1.0.0
 servers:
   - url: http://localhost:8080
@@ -91,10 +91,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /r/{short_code}/stats:
+  /api/v1/links/{short_code}/stats:
     get:
       summary: Get link analytics and statistics
-      description: Returns aggregated click metrics, unique visitors, and device/browser/OS distributions by querying the analytics service via gRPC.
+      description: Returns asynchronously aggregated click metrics, unique IP counts, and device/browser/OS distributions by querying the analytics service via gRPC.
       operationId: getLinkStats
       tags:
         - Analytics
@@ -212,9 +212,9 @@ components:
             type: integer
             format: int64
           example:
-            desktop: 900
-            mobile: 320
-            tablet: 30
+            Desktop: 900
+            Mobile: 320
+            Tablet: 30
 
     ErrorResponse:
       type: object

@@ -25,3 +25,6 @@ mock:
 
 lint:
 	golangci-lint run ./...
+
+stress-test:
+	docker run --rm -i --network host grafana/k6 run - < script.js
